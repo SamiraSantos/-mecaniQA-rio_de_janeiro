@@ -9,6 +9,11 @@ Este projeto executa três serviços isolados:
 Somente a API é publicada no computador. MySQL e Redis são acessados pela API
 por meio dos nomes internos `mysql` e `redis`.
 
+O arquivo `docker-compose.yml` conecta os três serviços à rede bridge
+`mecaniqa-network`. O DNS interno do Docker resolve automaticamente os nomes dos
+serviços, portanto a API acessa o banco por `mysql:3306` e o cache por
+`redis:6379`, sem IPs fixos.
+
 ## Pré-requisitos
 
 - Docker Engine iniciado no Ubuntu/WSL;
@@ -63,6 +68,12 @@ docker compose exec redis redis-cli ping
 ```
 
 O resultado esperado é `PONG`.
+
+## Persistência
+
+Os volumes nomeados `mysql_data` e `redis_data` são armazenados fora da camada
+gravável dos containers. Assim, recriar ou reiniciar os containers não remove os
+dados. O MySQL grava em `/var/lib/mysql` e o Redis em `/data`.
 
 ## Logs e ciclo de vida
 
