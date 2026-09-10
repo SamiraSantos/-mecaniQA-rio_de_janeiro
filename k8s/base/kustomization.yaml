@@ -1,0 +1,8 @@
+resources:
+  - namespace.yaml
+  - secret.yaml
+  - mysql-pvc.yaml
+  - redis-pvc.yaml
+  - mysql.yaml
+  - redis.yaml
+  - api.yaml

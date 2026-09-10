@@ -92,3 +92,77 @@ O comando `docker compose down` preserva os volumes. O uso de
 
 O arquivo `.env` contém credenciais apenas para o laboratório e não é enviado ao
 Git. Antes de produção, use senhas fortes e um gerenciador de segredos.
+
+## Kubernetes
+
+Os manifestos do cluster estão em `k8s/`. Eles criam:
+
+- `Deployment` com duas réplicas para a API e auto-recuperação de Pods;
+- `Deployment` de uma réplica para MySQL e Redis;
+- `Service` interno (`ClusterIP`) para MySQL e Redis;
+- `Service` externo (`LoadBalancer`) para a API;
+- `PersistentVolumeClaim` para os dados de MySQL e Redis.
+
+Antes do deploy em nuvem, publique a imagem da API em um registry e substitua
+`ghcr.io/SEU-USUARIO/mecaniqa-api:1.0.0` em `k8s/base/api.yaml` pelo endereço real.
+
+Depois de configurar o contexto do cluster, aplique tudo com:
+
+```bash
+kubectl apply -k k8s
+kubectl get pods,services,pvc -n mecaniqa
+```
+
+Para identificar um Pod em falha:
+
+```bash
+kubectl get pods -n mecaniqa
+kubectl describe pod NOME_DO_POD -n mecaniqa
+kubectl logs NOME_DO_POD -n mecaniqa
+```
+
+### Cluster local com kind
+
+Se a equipe ainda não tiver um cluster em nuvem, use `kind` para executar um
+cluster Kubernetes local dentro do Docker. Essa alternativa é adequada para o
+laboratório, mas não substitui um cluster em nuvem em produção.
+
+Instale o `kind` no Ubuntu/WSL (arquitetura x86_64):
+
+```bash
+mkdir -p "$HOME/.local/bin"
+curl -Lo "$HOME/.local/bin/kind" https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+chmod +x "$HOME/.local/bin/kind"
+"$HOME/.local/bin/kind" --version
+```
+
+Os comandos abaixo usam `sudo docker`, que funciona sem alterar as permissões do
+usuário. Se preferir remover o `sudo` futuramente, adicione seu usuário ao grupo
+`docker` e reabra o Ubuntu (isso concede ao usuário controle administrativo do
+Docker):
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+Na raiz do projeto, crie o cluster, carregue a imagem local e aplique a
+sobreposição específica do kind:
+
+```bash
+sudo docker build -t mecaniqa-api:1.0 .
+sudo "$HOME/.local/bin/kind" create cluster --name mecaniqa --config k8s/overlays/kind/kind-cluster.yaml --kubeconfig "$HOME/.kube/config" --wait 5m
+sudo chown "$USER":"$USER" "$HOME/.kube/config"
+sudo "$HOME/.local/bin/kind" load docker-image mecaniqa-api:1.0 --name mecaniqa
+kubectl apply -k k8s/overlays/kind
+kubectl get pods,services,pvc -n mecaniqa
+```
+
+No kind, a API usa `NodePort` e fica disponível em:
+
+```bash
+curl http://localhost:8081/actuator/health
+```
+
+O manifesto-base em `k8s/` continua usando `LoadBalancer` para o futuro deploy
+em nuvem. A sobreposição `k8s/overlays/kind/` não precisa de Docker Hub porque
+carrega a imagem diretamente nos nós locais do cluster.
