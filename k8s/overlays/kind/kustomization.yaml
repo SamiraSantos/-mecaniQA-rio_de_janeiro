@@ -1,0 +1,27 @@
+# Sobreposição para executar os mesmos manifestos em um cluster Kubernetes local.
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Service
+      name: api
+      namespace: mecaniqa
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+      - op: add
+        path: /spec/ports/0/nodePort
+        value: 30080
+  - target:
+      kind: Deployment
+      name: api
+      namespace: mecaniqa
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: mecaniqa-api:1.0
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
