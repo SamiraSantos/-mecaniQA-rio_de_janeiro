@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Compila a API em uma etapa separada para não levar o Maven para a imagem final.
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+FROM maven:3.9-eclipse-temurin-25-alpine AS build
 
 WORKDIR /workspace
 
@@ -11,8 +11,8 @@ RUN mvn -B dependency:go-offline
 COPY src ./src
 RUN mvn -B clean package -DskipTests
 
-# Imagem definida pela equipe para executar a aplicação com Java 17.
-FROM eclipse-temurin:17-jdk-alpine
+# Imagem definida pela equipe para executar a aplicação com Java 25.
+FROM eclipse-temurin:25-jdk-alpine
 
 WORKDIR /app
 

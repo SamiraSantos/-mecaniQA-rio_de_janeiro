@@ -2,7 +2,7 @@
 
 Este projeto executa três serviços isolados:
 
-- API Java 17 na porta `8080`;
+- API Java 25 na porta `8080`;
 - MySQL 8.4 em uma rede interna;
 - Redis 7.4 em uma rede interna.
 
