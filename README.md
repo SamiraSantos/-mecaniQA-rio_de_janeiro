@@ -1,5 +1,8 @@
 # MecaniQA Tech — laboratório de containers
 
+O [Projeto de Métricas](k8s/metrics/README.md) adiciona um simulador de sensores
+IoT em Python instrumentado e uma stack Prometheus independente para Kubernetes.
+
 Este projeto executa três serviços isolados:
 
 - API Java 25 na porta `8080`;
