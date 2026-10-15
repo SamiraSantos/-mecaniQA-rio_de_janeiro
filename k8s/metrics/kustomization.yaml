@@ -5,7 +5,15 @@ resources:
   - namespace.yaml
   - simulator.yaml
   - prometheus.yaml
+  - grafana.yaml
 configMapGenerator:
   - name: prometheus-config
     files:
       - prometheus.yml
+  - name: grafana-provisioning
+    files:
+      - datasources.yaml=grafana/provisioning/datasources/datasources.yaml
+      - dashboards.yaml=grafana/provisioning/dashboards/dashboards.yaml
+  - name: grafana-dashboards
+    files:
+      - golden-signals.json=grafana/dashboards/golden-signals.json

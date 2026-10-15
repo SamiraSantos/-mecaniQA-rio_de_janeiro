@@ -1,7 +1,8 @@
 # Projeto de Métricas
 
-Stack independente da API Java existente: simulador Python e Prometheus no
-namespace `metrics`. Não exige Prometheus Operator, RBAC de cluster ou banco de dados.
+Stack independente da API Java existente: simulador Python, Prometheus e Grafana
+no namespace `metrics`. Não exige Prometheus Operator, RBAC de cluster ou banco
+de dados.
 
 ## Executar localmente
 
@@ -39,6 +40,7 @@ kind load docker-image mecaniqa-iot-simulator:1.0.0 --name mecaniqa
 kubectl apply -k k8s/metrics
 kubectl rollout status deployment/iot-simulator -n metrics --timeout=180s
 kubectl rollout status deployment/prometheus -n metrics --timeout=180s
+kubectl rollout status deployment/grafana -n metrics --timeout=180s
 kubectl get pods,services -n metrics
 ```
 
@@ -53,6 +55,29 @@ novo rollout do Prometheus. A coleta acontece a cada 15 segundos via Service DNS
 Mantenha uma réplica do simulador: escalar requer descoberta e coleta individual
 dos Pods para evitar alternar contadores entre réplicas no mesmo alvo.
 
+## Grafana e dashboards
+
+O Grafana é provisionado automaticamente com Prometheus como fonte de dados.
+O dashboard versionado `MecaniQA - Golden Signals` contém exatamente quatro
+painéis:
+
+| Painel | Query PromQL base | Objetivo |
+| --- | --- | --- |
+| CPU | `sum(rate(process_cpu_seconds_total{job="iot-simulator"}[5m]))` | Uso de CPU pelo simulador. |
+| Memória | `process_resident_memory_bytes{job="iot-simulator"}` | Memória residente do processo Python. |
+| Erro | `erros / (erros + leituras)` | Detectar aumento de falhas das leituras. |
+| Sucesso | `leituras / (erros + leituras)` | Confirmar a proporção de leituras válidas. |
+
+Para acessar localmente, execute:
+
+```bash
+kubectl port-forward -n metrics service/grafana 3000:3000
+```
+
+Abra `http://localhost:3000` e entre com `admin` / `admin`. Em seguida, acesse
+**Dashboards > MecaniQA > MecaniQA - Golden Signals**. Essas credenciais são
+exclusivas do laboratório; em produção, use um Secret com senha forte.
+
 ## Verificar a coleta
 
 Em terminais separados:
@@ -60,6 +85,7 @@ Em terminais separados:
 ```bash
 kubectl port-forward -n metrics service/prometheus 9090:9090
 kubectl port-forward -n metrics service/iot-simulator 8000:8000
+kubectl port-forward -n metrics service/grafana 3000:3000
 ```
 
 Acesse `http://localhost:8000/metrics` e `http://localhost:9090/targets`.

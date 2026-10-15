@@ -1,0 +1,53 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [{ "expr": "sum(rate(process_cpu_seconds_total{job=\"iot-simulator\"}[5m]))", "legendFormat": "CPU do simulador", "refId": "A" }],
+      "title": "CPU do simulador",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "min": 0 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [{ "expr": "process_resident_memory_bytes{job=\"iot-simulator\"}", "legendFormat": "Memória residente", "refId": "A" }],
+      "title": "Memória do simulador",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [{ "expr": "sum(rate(iot_sensor_errors_total[5m])) / clamp_min(sum(rate(iot_sensor_errors_total[5m])) + sum(rate(iot_sensor_readings_total[5m])), 0.001)", "legendFormat": "Taxa de erro", "refId": "A" }],
+      "title": "Taxa de erro das leituras",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [{ "expr": "sum(rate(iot_sensor_readings_total[5m])) / clamp_min(sum(rate(iot_sensor_errors_total[5m])) + sum(rate(iot_sensor_readings_total[5m])), 0.001)", "legendFormat": "Taxa de sucesso", "refId": "A" }],
+      "title": "Taxa de sucesso das leituras",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 41,
+  "tags": ["mecaniqa", "golden-signals", "iot"],
+  "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" },
+  "title": "MecaniQA - Golden Signals",
+  "uid": "mecaniqa-golden-signals",
+  "version": 1
+}
