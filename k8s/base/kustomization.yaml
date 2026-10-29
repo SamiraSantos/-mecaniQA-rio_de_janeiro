@@ -6,3 +6,4 @@ resources:
   - mysql.yaml
   - redis.yaml
   - api.yaml
+  - hpa.yaml

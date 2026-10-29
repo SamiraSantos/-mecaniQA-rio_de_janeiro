@@ -1,0 +1,64 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: mecaniqa-alert-rules
+  namespace: mecaniqa
+  labels:
+    role: alert-rules
+    app.kubernetes.io/part-of: mecaniqa-tech
+spec:
+  groups:
+    - name: mecaniqa-infrastructure-and-app-alerts
+      rules:
+        # =========================================================================
+        # 1. Alarme de Infraestrutura: CPU > 80% do Request por 5 minutos
+        # =========================================================================
+        - alert: HighPodCpuUsage
+          expr: (sum(rate(container_cpu_usage_seconds_total{namespace="mecaniqa", container="api"}[2m])) / sum(kube_pod_container_resource_requests{namespace="mecaniqa", container="api", resource="cpu"})) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            tier: infrastructure
+          annotations:
+            summary: "Consumo crítico de CPU nos pods da API MecaniQA"
+            description: "A média de consumo de CPU ultrapassou 80% do request contratado por mais de 5 minutos, indicando que o HPA pode estar no limite de escala ou com gargalo sustentado."
+
+        # =========================================================================
+        # 2. Alarme de Infraestrutura: Memória Working Set > 85% do Limit por 5 minutos
+        # =========================================================================
+        - alert: HighPodMemoryUsage
+          expr: (sum(container_memory_working_set_bytes{namespace="mecaniqa", container="api"}) / sum(kube_pod_container_resource_limits{namespace="mecaniqa", container="api", resource="memory"})) * 100 > 85
+          for: 5m
+          labels:
+            severity: critical
+            tier: infrastructure
+          annotations:
+            summary: "Consumo crítico de memória nos pods da API MecaniQA"
+            description: "O working set de memória ultrapassou 85% do limite configurado por mais de 5 minutos, gerando risco iminente de OOMKilled se não contido."
+
+        # =========================================================================
+        # 3. Alarme de Aplicação (Customizado): Latência P95 > 1 segundo por 3 minutos
+        # =========================================================================
+        - alert: HighP95Latency
+          expr: histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{namespace="mecaniqa", uri!~"/actuator.*"}[2m])) by (le)) > 1
+          for: 3m
+          labels:
+            severity: warning
+            tier: application
+          annotations:
+            summary: "Degradação severa de latência P95 na API de Sensores IoT"
+            description: "O percentil 95 do tempo de resposta da API de Sensores ultrapassou 1 segundo por 3 minutos contínuos sob estresse."
+
+        # =========================================================================
+        # 4. Alarme de Aplicação (Customizado): Taxa de Erro HTTP 5xx > 5% por 3 minutos
+        # =========================================================================
+        - alert: HighHttpErrorRate
+          expr: (sum(rate(http_server_requests_seconds_count{namespace="mecaniqa", status=~"5.."}[2m])) / sum(rate(http_server_requests_seconds_count{namespace="mecaniqa"}[2m]))) * 100 > 5
+          for: 3m
+          labels:
+            severity: critical
+            tier: application
+          annotations:
+            summary: "Taxa de erro HTTP 5xx acima do tolerável na API MecaniQA"
+            description: "Mais de 5% das requisições enviadas pelos sensores IoT resultaram em status HTTP 5xx nos últimos 3 minutos."
+
