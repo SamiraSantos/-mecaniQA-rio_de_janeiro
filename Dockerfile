@@ -1,28 +1,23 @@
-# syntax=docker/dockerfile:1
+# For more information, please refer to https://aka.ms/vscode-docker-python
+FROM python:3-slim
 
-# Compila a API em uma etapa separada para não levar o Maven para a imagem final.
-FROM maven:3.9-eclipse-temurin-17-alpine AS build
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
 
-WORKDIR /workspace
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
 
-COPY pom.xml .
-RUN mvn -B dependency:go-offline
-
-COPY src ./src
-RUN mvn -B clean package -DskipTests
-
-# Imagem definida pela equipe para executar a aplicação com Java 17.
-FROM eclipse-temurin:17-jdk-alpine
+# Install pip requirements
+COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
 
 WORKDIR /app
+COPY . /app
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-COPY --from=build --chown=appuser:appgroup /workspace/target/mecaniqa-api.jar /app/app.jar
-
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-python-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
-EXPOSE 8080
-
-# O processo Java fica em primeiro plano e mantém o container em execução.
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["python", "iot-simulator/main.py"]

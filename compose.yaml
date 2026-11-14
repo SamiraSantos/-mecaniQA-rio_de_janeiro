@@ -1,0 +1,6 @@
+services:
+  mecaniqariodejaneiro:
+    image: mecaniqariodejaneiro
+    build:
+      context: .
+      dockerfile: ./Dockerfile
